@@ -22,38 +22,61 @@ def haversine(lat1, lon1, lat2, lon2):
     return round(c * r, 4)
 
 
-def dist_from(coordennees):
-    dist = []
-    for i in range(len(coordennees)):
-        for j in range(len(coordennees)):
-            lat1 = float(coordennees[i]['lat'])
-            lon1 = float(coordennees[i]['lon'])
-            lat2 = float(coordennees[j]['lat'])
-            lon2 = float(coordennees[j]['lon'])
-
-            dist.append(haversine(lat1, lon1, lat2, lon2))
-
-        coordennees[i]['dist'] = dist
-        dist = []
-    return coordennees
+def dist_from(city1, city2):
+    dist = haversine(float(city1[0]), float(city1[1]), float(city2[0]), float(city2[1]))
+    return dist
 
 
-def nearest_neighbors(coordennees):
-    pp = 1000
-    ipp = 0
+# def nearest_neighbors(coordennees):
+#     dist_max = 10000
+#     nearest = [0*len(coordennees)]
+#     for i in range(len(coordennees)):
+#         temp = 0
+#         for j in range(len(coordennees)):
+#             if dist_from(donnes.coordennees[i], donnes.coordennees[j]) < dist_max and dist_from(donnes.coordennees[i], donnes.coordennees[j]) != 0.0:
+#                 dist_max = dist_from(donnes.coordennees[i], donnes.coordennees[j])
+#                 temp = j
+#         nearest.append(coordennees[temp])
+#         coordennees.pop()
+#     print(nearest)
 
-    for i in range(len(coordennees)):
-        for j in range(len(coordennees)):
-            if coordennees[i]['dist'][j] < pp and coordennees[i]['dist'][j] != 0.0:
+def path_distance(route, cities):
+    print(route)
+    list_dist = []
+    for j in route:
+        if j + 1 < len(route):
+            dist = haversine(float(cities[j][0]), float(cities[j][1]), float(cities[j + 1][0]), float(cities[j + 1][1]))
+            list_dist.append(dist)
+    sum_dist = sum(list_dist)
+    print(sum_dist)
+    return sum_dist
 
-                pp= coordennees[i]['dist'][j]
-                ipp = j
-                print(j)
-    # print(ipp)
+
+# two_opt_swap = lambda r,i,k: np.concatenate((r[0:i],r[k:-len(r)+i-1:-1],r[k+1:len(r)]))
+def swap(listVille, i, j):
+    listVille[i], listVille[j] = listVille[j], listVille[i]
+    return listVille
+
+
+def two_opt(cities):
+    route = np.arange(cities.shape[0])
+    best_distance = path_distance(route, cities)
+    for swap_first in range(1, len(route)):
+        for swap_last in range(swap_first + 1, len(route)):
+            new_route = swap(route, 0, len(route) - 1)
+            new_distance = path_distance(new_route, cities)
+            print(new_distance)
+            if new_distance < best_distance:
+                route = new_route
+                best_distance = new_distance
+
+    print(route)
+    return route
 
 
 if __name__ == '__main__':
-    coordennees = dist_from(donnes.coordennees)
-    print(coordennees)
-
-    nearest_neighbors(coordennees)
+    cities = np.array(donnes.coordennees)
+    route = np.arange(cities.shape[0])
+    route2 = [2, 3, 1, 0]
+    # route = two_opt(cities)
+    path_distance(route2, cities)
