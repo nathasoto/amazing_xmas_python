@@ -1,8 +1,10 @@
 import numpy as np
 from numpy import append
-
+import pandas as pd
 import donnes
 from math import radians, cos, sin, asin, sqrt
+import folium
+
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -63,22 +65,102 @@ def swap(listVille, i, j):
 def two_opt(cities):
     route = np.arange(cities.shape[0])
     best_distance = path_distance(route, cities)
-    for swap_first in range(1, len(route)-2):
+    for swap_first in range(1, len(route) - 2):
         for swap_last in range(swap_first + 1, len(route)):
-            new_route = swap(route, 0, len(route) - 1)
+            new_route = swap(route, swap_first, swap_last)
             new_distance = path_distance(new_route, cities)
             if new_distance < best_distance:
                 route = new_route
                 best_distance = new_distance
 
     print(route)
+    print(best_distance)
     return route
 
 
-if __name__ == '__main__':
-    cities = np.array(donnes.coordennees)
-    route = np.arange(cities.shape[0])
-    route2=[23,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,0]
-    route = two_opt(cities)
+def transfor_route_to_cities(route, list_donnes):
+    list_cities = []
+    for i in route:
+        list_cities.append(list_donnes[i])
+    return list_cities
 
-    # path_distance(route, cities)
+
+# def two_opt_better(cities, improvement_threshold):
+#     route = np.arange(cities.shape[0])
+#     improvement_factor = 1
+#     best_distance = path_distance(route, cities)
+#     while improvement_factor > improvement_threshold:
+#         distance_to_beat = best_distance
+#         for swap_first in range(1, len(route) - 2):
+#             for swap_last in range(swap_first + 1, len(route)):
+#                 new_route = swap(route, swap_first, swap_last)
+#                 new_distance = path_distance(new_route, cities)
+#                 if new_distance < best_distance:
+#                     route = new_route
+#                     best_distance = new_distance
+#         improvement_factor = 1 - best_distance / distance_to_beat
+#     print(route)
+#     print(best_distance)
+#     return route
+
+
+if __name__ == '__main__':
+    # read csv
+    df = pd.read_csv('70villes.csv', header=0, delimiter=',')
+    # convert df to list
+    list_donnes = df.values.tolist()
+
+    # print(list_donnes)
+
+    cities = np.array(donnes.coordennees)
+    route_normal = two_opt(cities)
+
+    donnes_organize = transfor_route_to_cities(route_normal, donnes.coordennees)
+
+    print(donnes_organize)
+
+    m = folium.Map((45.166672, 5.71667), zoom_start=12)
+    for i in range(len(donnes.coordennees)):
+        # # Adding markers
+        folium.Marker(
+            location=[donnes.coordennees[i][0], donnes.coordennees[i][1]],
+            tooltip="Click me!",
+            popup="Timberline Lodge",
+            icon=folium.Icon(color='red')
+        ).add_to(m)
+        m.save("index.html")
+
+
+    trail_coordinates = [
+    [45.171112, 5.695952],
+    [45.183152, 5.699386],
+    [45.174115, 5.711106],
+    [45.176123, 5.722083],
+    [45.184301, 5.719791],
+    [45.184252, 5.730698],
+    [45.170588, 5.716664],
+    [45.193702, 5.691028],
+    [45.165641, 5.739938],
+    [45.178718, 5.744940],
+    [45.176857, 5.762518],
+    [45.188512, 5.767172],
+    [45.174017, 5.706729],
+    [45.174458, 5.687902],
+    [45.185110, 5.733667],
+    [45.185702, 5.734507],
+    [45.184726, 5.734666],
+    [45.184438, 5.733735],
+    [45.184902, 5.735256],
+    [45.174812, 5.698095],
+    [45.169851, 5.695723],
+    [45.180943, 5.698965],
+    [45.176205, 5.692165],
+    [45.171244, 5.689872]
+]
+
+    folium.PolyLine(trail_coordinates, tooltip="Coast").add_to(m)
+    m.save("index.html")
+
+
+
+
