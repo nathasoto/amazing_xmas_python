@@ -1,5 +1,62 @@
+import math
+
 import numpy as np
-from haversine import haversine, Unit
+from haversine import haversine
+
+
+def get_distance_matrix(cities):
+    num_cities = len(cities)
+    distances = [[0] * num_cities for _ in range(num_cities)]
+    for i in range(num_cities):
+        for j in range(i + 1, num_cities):
+            dist = haversine((float(cities[i][0]), float(cities[i][1])), (float(cities[j][0]), float(cities[j][1])))
+            distances[i][j] = int(dist)
+            distances[j][i] = int(dist)
+    return distances
+
+
+def solve_tsp_nearest(distances):
+    num_cities = len(distances)
+    visited = [False] * num_cities
+    tour = []
+    total_distance = 0
+
+    # Start at the first city
+    current_city = 0
+    tour.append(current_city)
+    visited[current_city] = True
+
+    # Repeat until all cities have been visited
+    while len(tour) < num_cities:
+        nearest_city = None
+        nearest_distance = math.inf
+
+        # Find the nearest unvisited city
+        for city in range(num_cities):
+            if not visited[city]:
+                distance = distances[current_city][city]
+                if distance < nearest_distance:
+                    nearest_city = city
+                    nearest_distance = distance
+
+        # Move to the nearest city
+        current_city = nearest_city
+        tour.append(current_city)
+        visited[current_city] = True
+        total_distance += nearest_distance
+
+    # Complete the tour by returning to the starting city
+    tour.append(0)
+    total_distance += distances[current_city][0]
+
+    return tour
+
+
+def transfor_route_to_cities(route, list_donnes):
+    list_cities = []
+    for i in route:
+        list_cities.append(list_donnes[i])
+    return list_cities
 
 
 def path_distance(coordinates):
@@ -11,65 +68,40 @@ def path_distance(coordinates):
             list_dist.append(dist)
     sum_dist = sum(list_dist)
     # print(list_dist)
-    print(sum_dist)
+    # print(sum_dist)
     return sum_dist
 
 
-def swap(listVille, i, j):
-    listVille[i], listVille[j] = listVille[j], listVille[i]
-    return listVille
-
-
-def two_opt(coordinates):
-    best_distance = path_distance(coordinates)
-    for swap_first in range(1, len(coordinates) - 2):
-        for swap_last in range(swap_first + 1, len(coordinates)):
-            new_route = swap(coordinates, swap_first, swap_last)
-            new_distance = path_distance(new_route)
-            if new_distance < best_distance:
-                coordinates= new_route
-                best_distance = new_distance
-
-    print(coordinates)
-    print(best_distance)
-    return coordinates
-
-def matriz_dist(coordinates):
-    dist =[]
-    matriz =[]
-    for i in range(len(coordinates)):
-        for j in range(1,len(coordinates)):
-               dist.append(haversine((float(coordinates[i][0]), float(coordinates[i][1])),
-                             (float(coordinates[j][0]), float(coordinates[j][1]))))
-        matriz.append(dist)
-        dist=[]
-    print(np.asarray(matriz))
-
-
-def two_opt2(NN):
+def two_opt2(coordinates):
     min_change = 0
+    for i in range(len(coordinates) - 2):
+        for j in range(i + 2, len(coordinates) - 1):
 
-    for i in range(len(NN)-2):
-        for j in range(i+2, len(NN)-1):
-            city1 = NN[i]
-            city2=  NN[i+1]
-            dist1 = haversine((float(city1[0]), float(city1[1])), (float(city2[0]),float(city2[1])))
-            city3= NN[j]
-            city4= NN[j+1]
-            dist2= haversine((float(city3[0]), float(city3[1])), (float(city4[0]),float(city4[1])))
-            cost_actual =  dist1 + dist2
-            # cost_actual =dist_from(NN[i], NN[i+1])+dist_from(NN[j], NN[j+1])
-            dist3= haversine((float(city1[0]), float(city1[1])), (float(city3[0]),float(city3[1])))
-            dist4= haversine((float(city2[0]), float(city2[1])), (float(city4[0]),float(city4[1])))
-            cost_nuevo = dist3 + dist4
-            # cost_nuevo = dist_from(NN[i], NN[j]) + dist_from(NN[i+1], NN[j + 1])
+            cost_actual = haversine((float(coordinates[i][0]), float(coordinates[i][1])),
+                                    (float(coordinates[i + 1][0]), float(coordinates[i + 1][1]))) + haversine(
+                (float(coordinates[j][0]), float(coordinates[j][1])),
+                (float(coordinates[j + 1][0]), float(coordinates[j + 1][1])))
+            cost_nuevo = haversine((float(coordinates[i][0]), float(coordinates[i][1])),
+                                   (float(coordinates[j][0]), float(coordinates[j][1]))) + haversine(
+                (float(coordinates[i + 1][0]), float(coordinates[i + 1][1])),
+                (float(coordinates[j + 1][0]), float(coordinates[j + 1][1])))
             change = cost_nuevo - cost_actual
 
-            if change  < min_change:
+            if change < min_change:
                 min_change = change
                 min_i = i
                 min_j = j
     if min_change < 0:
-        NN[min_i+1:min_j+1] =  NN[min_i+1:min_j+1][::-1]
+        coordinates[min_i + 1:min_j + 1] = coordinates[min_i + 1:min_j + 1][::-1]
 
-    return NN
+    return coordinates
+
+
+def two_opt(solution):
+    change = 1
+    while change != 0:
+        inicial = path_distance(solution)
+        solution = two_opt2(solution).copy()
+        final = path_distance(solution)
+        change = np.abs(final - inicial)
+    return solution
